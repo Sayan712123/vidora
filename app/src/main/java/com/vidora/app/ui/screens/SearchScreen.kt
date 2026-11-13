@@ -5,7 +5,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -34,6 +33,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
@@ -44,9 +45,7 @@ import com.vidora.app.data.Channel
 import com.vidora.app.data.Video
 import com.vidora.app.ui.components.ChannelAvatar
 import com.vidora.app.ui.components.EmptyState
-import com.vidora.app.ui.components.ErrorBlock
 import com.vidora.app.ui.components.Pill
-import com.vidora.app.ui.components.SkeletonBlock
 import com.vidora.app.ui.components.VideoFeed
 import com.vidora.app.ui.icons.IconClose
 import com.vidora.app.ui.icons.IconSearch
@@ -71,7 +70,9 @@ fun SearchScreen(
     var channels by remember { mutableStateOf<List<Channel>>(emptyList()) }
     var channelsLoading by remember { mutableStateOf(false) }
     var channelsError by remember { mutableStateOf<String?>(null) }
+    var channelReload by remember { mutableStateOf(0) }
 
+    val focusRequester = remember { FocusRequester() }
     val keyboard = LocalSoftwareKeyboardController.current
 
     fun runSearch(term: String) {
@@ -83,7 +84,7 @@ fun SearchScreen(
         keyboard?.hide()
     }
 
-    LaunchedEffect(submitted, tab) {
+    LaunchedEffect(submitted, tab, channelReload) {
         if (submitted.isBlank() || tab != 1) return@LaunchedEffect
         channelsLoading = true
         channelsError = null
@@ -133,7 +134,9 @@ fun SearchScreen(
                         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                         keyboardActions = KeyboardActions(onSearch = { runSearch(query) }),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .focusRequester(focusRequester)
                     )
                 }
                 if (query.isNotEmpty()) {
@@ -233,7 +236,7 @@ fun SearchScreen(
                 }
                 item {
                     LazyRow(
-                        contentPadding = PaddingValues(horizontal = 16.dp),
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         items(suggestions) { term ->
@@ -268,6 +271,7 @@ fun SearchScreen(
                     channels = channels,
                     loading = channelsLoading,
                     error = channelsError,
+                    onRetry = { channelReload++ },
                     onChannelClick = onChannelClick
                 )
             }
@@ -280,24 +284,32 @@ private fun ChannelResults(
     channels: List<Channel>,
     loading: Boolean,
     error: String?,
+    onRetry: () -> Unit,
     onChannelClick: (String) -> Unit
 ) {
     when {
         loading -> Column(modifier = Modifier.fillMaxSize()) {
             repeat(5) {
                 Row(modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)) {
-                    SkeletonBlock(Modifier.size(52.dp), radius = 26)
+                    com.vidora.app.ui.components.SkeletonBlock(Modifier.size(52.dp), radius = 26)
                     Spacer(Modifier.width(12.dp))
                     Column(Modifier.weight(1f)) {
-                        SkeletonBlock(Modifier.fillMaxWidth(0.6f).height(13.dp), radius = 4)
+                        com.vidora.app.ui.components.SkeletonBlock(
+                            Modifier.fillMaxWidth(0.6f).height(13.dp), radius = 4
+                        )
                         Spacer(Modifier.height(7.dp))
-                        SkeletonBlock(Modifier.fillMaxWidth(0.35f).height(11.dp), radius = 4)
+                        com.vidora.app.ui.components.SkeletonBlock(
+                            Modifier.fillMaxWidth(0.35f).height(11.dp), radius = 4
+                        )
                     }
                 }
             }
         }
 
-        error != null -> ErrorBlock(message = error, onRetry = {})
+        error != null -> com.vidora.app.ui.components.ErrorBlock(
+            message = error.orEmpty(),
+            onRetry = onRetry
+        )
 
         channels.isEmpty() -> EmptyState(
             title = "No channels found",
