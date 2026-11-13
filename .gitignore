@@ -1,0 +1,25 @@
+# Gradle
+.gradle/
+build/
+app/build/
+
+# Local configuration - NEVER commit (holds your API key)
+local.properties
+
+# Signing material - NEVER commit
+*.jks
+*.keystore
+key.properties
+release.keystore
+
+# IDE
+.idea/
+*.iml
+dist/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
