@@ -34,7 +34,6 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -272,7 +271,7 @@ fun VideoRow(
     }
 }
 
-/** Horizontal shelf card, used for the "Trending now" row on the home screen. */
+/** Horizontal shelf card, used for "Continue watching" style rows. */
 @Composable
 fun VideoTile(video: Video, onClick: () -> Unit, width: Int = 190) {
     Column(
@@ -440,7 +439,7 @@ fun EmptyState(
             text = message,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center
         )
     }
 }

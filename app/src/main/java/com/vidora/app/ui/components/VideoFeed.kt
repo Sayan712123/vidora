@@ -35,7 +35,7 @@ import com.vidora.app.data.VideoPage
 /**
  * A paged, error-tolerant list of videos.
  *
- * One instance handles: first load, pulling the next page when the user nears the end,
+ * One instance handles: first load, pull of the next page when the user nears the end,
  * a retry button on failure, and the empty state. Reused by every list screen so the
  * paging logic exists exactly once.
  */
