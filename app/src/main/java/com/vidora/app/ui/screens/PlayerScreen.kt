@@ -19,7 +19,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -33,7 +32,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -67,13 +65,15 @@ fun PlayerScreen(
     val context = LocalContext.current
 
     var video by remember(videoId) { mutableStateOf(repo.cachedVideo(videoId)) }
+    var channel by remember(videoId) { mutableStateOf<Channel?>(null) }
     var error by remember(videoId) { mutableStateOf<String?>(null) }
     var related by remember(videoId) { mutableStateOf<List<Video>>(emptyList()) }
     var descriptionExpanded by remember(videoId) { mutableStateOf(false) }
     var showPlaylistDialog by remember { mutableStateOf(false) }
     var newPlaylistName by remember { mutableStateOf("") }
+    var reloadToken by remember(videoId) { mutableStateOf(0) }
 
-    LaunchedEffect(videoId) {
+    LaunchedEffect(videoId, reloadToken) {
         error = null
         try {
             val loaded = repo.video(videoId)
@@ -83,6 +83,11 @@ fun PlayerScreen(
                 video = loaded
                 // Watching a video is what puts it in history.
                 store.addToHistory(loaded)
+                // Load the channel too: subscribing from here must store the uploads
+                // playlist, otherwise the Subscriptions feed has nothing to show.
+                if (loaded.channelId.isNotBlank()) {
+                    channel = runCatching { repo.channel(loaded.channelId) }.getOrNull()
+                }
                 related = runCatching {
                     repo.search(loaded.title.take(60)).items.filterNot { it.id == loaded.id }
                 }.getOrDefault(emptyList())
@@ -119,7 +124,7 @@ fun PlayerScreen(
         }
 
         if (error != null && video == null) {
-            ErrorBlock(message = error.orEmpty(), onRetry = {})
+            ErrorBlock(message = error.orEmpty(), onRetry = { reloadToken++ })
             return@Column
         }
 
@@ -130,153 +135,150 @@ fun PlayerScreen(
             YouTubePlayer(videoId = videoId)
         }
 
-        val current = video
-
         LazyColumn(modifier = Modifier.fillMaxSize()) {
-            if (current != null) {
-                item {
-                    Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
-                        Text(
-                            text = current.title,
-                            style = MaterialTheme.typography.titleLarge,
-                            color = MaterialTheme.colorScheme.onBackground
-                        )
-                        Spacer(Modifier.height(5.dp))
-                        Text(
-                            text = buildString {
-                                val views = viewLabel(current.views)
-                                if (views.isNotBlank()) append(views)
-                                val when_ = relativeTime(current.publishedAt)
-                                if (when_.isNotBlank()) {
-                                    if (isNotEmpty()) append(" \u00B7 ")
-                                    append(when_)
-                                }
-                            },
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+            item {
+                val current = video ?: return@item
+                Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+                    Text(
+                        text = current.title,
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                    Spacer(Modifier.height(5.dp))
+                    Text(
+                        text = buildString {
+                            val views = viewLabel(current.views)
+                            if (views.isNotBlank()) append(views)
+                            val when_ = relativeTime(current.publishedAt)
+                            if (when_.isNotBlank()) {
+                                if (isNotEmpty()) append(" \u00B7 ")
+                                append(when_)
+                            }
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            // ------------------------------------------------------- action row
+            item {
+                val current = video ?: return@item
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp, vertical = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    ActionChip(
+                        label = if (store.isInWatchLater(current.id)) "Saved" else "Save",
+                        active = store.isInWatchLater(current.id),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        store.toggleWatchLater(current)
+                    }
+                    ActionChip(
+                        label = "Playlist",
+                        active = false,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        showPlaylistDialog = true
+                    }
+                    ActionChip(
+                        label = "Share",
+                        active = false,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        val intent = Intent(Intent.ACTION_SEND).apply {
+                            type = "text/plain"
+                            putExtra(
+                                Intent.EXTRA_TEXT,
+                                current.title + "\nhttps://www.youtube.com/watch?v=" + current.id
+                            )
+                        }
+                        context.startActivity(Intent.createChooser(intent, "Share video"))
                     }
                 }
+            }
 
-                // --------------------------------------------------- action row
-                item {
+            // ---------------------------------------------------- channel strip
+            item {
+                val current = video ?: return@item
+                if (current.channelId.isBlank()) return@item
+                val subscribed = store.isSubscribed(current.channelId)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Row(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 12.dp, vertical = 4.dp),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            .weight(1f)
+                            .clip(RoundedCornerShape(10.dp))
+                            .clickable { onChannelClick(current.channelId) },
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        ActionChip(
-                            label = if (store.isInWatchLater(current.id)) "Saved" else "Save",
-                            active = store.isInWatchLater(current.id),
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            store.toggleWatchLater(current)
-                        }
-                        ActionChip(
-                            label = "Playlist",
-                            active = false,
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            showPlaylistDialog = true
-                        }
-                        ActionChip(
-                            label = "Share",
-                            active = false,
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            val intent = Intent(Intent.ACTION_SEND).apply {
-                                type = "text/plain"
-                                putExtra(
-                                    Intent.EXTRA_TEXT,
-                                    current.title + "\nhttps://www.youtube.com/watch?v=" + current.id
-                                )
-                            }
-                            context.startActivity(Intent.createChooser(intent, "Share video"))
-                        }
-                    }
-                }
-
-                // ------------------------------------------------ channel strip
-                if (current.channelId.isNotBlank()) {
-                    item {
-                        val channel = repo.cachedChannel(current.channelId)
-                        val subscribed = store.isSubscribed(current.channelId)
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .clip(RoundedCornerShape(10.dp))
-                                    .clickable { onChannelClick(current.channelId) },
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                ChannelAvatar(
-                                    url = channel?.avatar.orEmpty(),
-                                    name = current.channelTitle,
-                                    size = 40
-                                )
-                                Spacer(Modifier.width(11.dp))
-                                Column {
-                                    Text(
-                                        text = current.channelTitle,
-                                        style = MaterialTheme.typography.titleSmall,
-                                        color = MaterialTheme.colorScheme.onBackground,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                    Text(
-                                        text = subscriberLabel(channel?.subscribers ?: 0L),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                            }
-                            SubscribeButton(
-                                subscribed = subscribed,
-                                onClick = {
-                                    val target = channel ?: Channel(
-                                        id = current.channelId,
-                                        title = current.channelTitle
-                                    )
-                                    store.toggleSubscription(target)
-                                }
-                            )
-                        }
-                    }
-                }
-
-                // -------------------------------------------------- description
-                if (current.description.isNotBlank()) {
-                    item {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                                .clickable { descriptionExpanded = !descriptionExpanded }
-                                .padding(12.dp)
-                        ) {
+                        ChannelAvatar(
+                            url = channel?.avatar.orEmpty(),
+                            name = current.channelTitle,
+                            size = 40
+                        )
+                        Spacer(Modifier.width(11.dp))
+                        Column {
                             Text(
-                                text = current.description,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = if (descriptionExpanded) Int.MAX_VALUE else 3,
+                                text = current.channelTitle,
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.onBackground,
+                                maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
-                            Spacer(Modifier.height(6.dp))
                             Text(
-                                text = if (descriptionExpanded) "Show less" else "Show more",
-                                style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.primary
+                                text = subscriberLabel(channel?.subscribers ?: 0L),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
+                    SubscribeButton(
+                        subscribed = subscribed,
+                        onClick = {
+                            val target = channel ?: Channel(
+                                id = current.channelId,
+                                title = current.channelTitle
+                            )
+                            store.toggleSubscription(target)
+                        }
+                    )
+                }
+            }
+
+            // ------------------------------------------------------ description
+            item {
+                val current = video ?: return@item
+                if (current.description.isBlank()) return@item
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                        .clickable { descriptionExpanded = !descriptionExpanded }
+                        .padding(12.dp)
+                ) {
+                    Text(
+                        text = current.description,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = if (descriptionExpanded) Int.MAX_VALUE else 3,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        text = if (descriptionExpanded) "Show less" else "Show more",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary
+                    )
                 }
             }
 
@@ -334,14 +336,13 @@ fun PlayerScreen(
                     }
                     Spacer(Modifier.height(10.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        BasicTextField(
+                        androidx.compose.foundation.text.BasicTextField(
                             value = newPlaylistName,
                             onValueChange = { newPlaylistName = it },
                             singleLine = true,
                             textStyle = MaterialTheme.typography.bodyMedium.copy(
                                 color = MaterialTheme.colorScheme.onBackground
                             ),
-                            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                             modifier = Modifier
                                 .weight(1f)
                                 .clip(RoundedCornerShape(10.dp))
