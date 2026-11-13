@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Legacy launcher icon for API 21-25, which have no adaptive-icon support.
+
+  This is the default (unqualified) mipmap config, so it is what those devices pick up.
+  On API 26+ the adaptive icon in mipmap-anydpi-v26/ic_launcher.xml takes over instead.
+
+  Kept as a vector so the repository stays free of binary assets and the icon stays
+  sharp at every density.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Rounded-square background, matching the adaptive icon's background colour. -->
+    <path
+        android:fillColor="#17182C"
+        android:pathData="M24,4 L84,4 A20,20 0 0 1 104,24 L104,84 A20,20 0 0 1 84,104 L24,104 A20,20 0 0 1 4,84 L4,24 A20,20 0 0 1 24,4 Z" />
+
+    <!-- Play triangle. -->
+    <path
+        android:fillColor="#FF7A45"
+        android:strokeColor="#FF7A45"
+        android:strokeWidth="7"
+        android:strokeLineJoin="round"
+        android:strokeLineCap="round"
+        android:pathData="M42,43 L42,65 L67,54 Z" />
+
+    <!-- Light streak lifting off the apex. -->
+    <path
+        android:strokeColor="#FFB347"
+        android:strokeWidth="5.5"
+        android:strokeLineCap="round"
+        android:pathData="M63,50.5 C69,47 73.5,42.5 76.5,36.5" />
+
+    <!-- Inner highlight for depth. -->
+    <path
+        android:fillColor="#FF9A5C"
+        android:fillAlpha="0.55"
+        android:pathData="M44.5,46.5 L44.5,61.5 L58,54 Z" />
+</vector>
