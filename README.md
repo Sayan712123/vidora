@@ -49,6 +49,22 @@ Vidora is a **read-only** client:
   (`youtube.com/embed/...`) inside a WebView. There is no stream extraction, no
   third-party player, no download feature and no ad removal.
 
+## What this app deliberately does not do
+
+These are not missing features to be added later — they are things a third-party
+client cannot do without breaking YouTube's terms or Google's brand rules:
+
+| Not included | Why |
+|---|---|
+| The YouTube logo, wordmark or any YouTube/Google brand asset | Trademarked. Vidora ships its own original name, mark and icon. |
+| Signing in to a Google account | Would need OAuth plus the user's own Google Cloud project; the app is local-only by design. |
+| Syncing subscriptions / history / playlists to a YouTube account | Same reason — no account, so everything is stored on the device. |
+| Downloading videos, background audio playback, ad removal | Prohibited by the YouTube API Services Terms. |
+| A native player with its own controls | Playback must go through the official embedded player. |
+
+If you need those, the official YouTube app is the right tool. Vidora is a
+lightweight, read-only browser for the public catalogue.
+
 ---
 
 ## Setup
@@ -206,7 +222,7 @@ vidora/
 │       │   └── util/Format.kt                duration, view counts, relative time
 │       └── res/
 │           ├── drawable/                     vector adaptive-icon foreground + monochrome
-│           ├── mipmap-*/                     legacy launcher icons (all densities)
+│           ├── mipmap/                       legacy vector launcher icon (API 21–25)
 │           ├── mipmap-anydpi-v26/            adaptive icon (API 26+)
 │           └── values/                       strings, colors, theme
 ├── gradle/wrapper/                   Gradle 8.7 wrapper
@@ -248,7 +264,7 @@ Vidora has its own identity and uses no third-party brand assets:
 - **App icon** — an original mark: a coral play triangle whose right edge lifts into an
   amber light streak. It ships as a **vector** adaptive icon
   (`res/drawable/ic_launcher_foreground.xml`) with a matching **monochrome** layer for
-  Android 13+ themed icons, plus legacy raster icons for API 21–25.
+  Android 13+ themed icons, plus a legacy vector icon for API 21–25.
 - **In-app icons** — every glyph (home, search, subscriptions, library, play, back,
   bookmark, history, settings, sun/moon, …) is hand-drawn on a 24×24 grid in
   `ui/icons/VidoraIcons.kt`. No icon font, no third-party icon pack.
