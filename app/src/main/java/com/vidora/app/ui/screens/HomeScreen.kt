@@ -64,7 +64,7 @@ fun HomeScreen(
     val store = AppGraph.store
     val repo = AppGraph.repo
 
-    // The shelf is a second, small request; fetched once per region.
+    // A "shelf" needs a second request; fetch it once per region and keep it small.
     var shelf by remember(store.region) { mutableStateOf<List<Video>>(emptyList()) }
     LaunchedEffect(store.region) {
         shelf = runCatching { repo.homeFeed().items.take(12) }.getOrDefault(emptyList())
@@ -121,18 +121,13 @@ private fun TopBar(onSearchClick: () -> Unit, onSettingsClick: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         VidoraWordmark(modifier = Modifier.weight(1f))
-        RoundIconButton(onClick = onSearchClick) {
-            IconSearch(MaterialTheme.colorScheme.onBackground)
-        }
-        RoundIconButton(onClick = onSettingsClick) {
-            IconSettings(MaterialTheme.colorScheme.onBackground)
-        }
+        IconButton(onClick = onSearchClick) { IconSearch(MaterialTheme.colorScheme.onBackground) }
+        IconButton(onClick = onSettingsClick) { IconSettings(MaterialTheme.colorScheme.onBackground) }
     }
 }
 
-/** A 40dp circular tap target - the minimum comfortable size on a phone. */
 @Composable
-fun RoundIconButton(onClick: () -> Unit, content: @Composable () -> Unit) {
+fun IconButton(onClick: () -> Unit, content: @Composable () -> Unit) {
     Box(
         modifier = Modifier
             .size(40.dp)
@@ -155,7 +150,7 @@ private fun RegionRow(selected: String, onSelect: (String) -> Unit) {
     }
 }
 
-/** Quick-access row shown on the library screen. */
+/** Quick-access row shown on the library screen too. */
 @Composable
 fun QuickAccessRow(
     onHistoryClick: () -> Unit,
@@ -167,12 +162,12 @@ fun QuickAccessRow(
             .padding(horizontal = 16.dp, vertical = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        QuickChip(modifier = Modifier.weight(1f), onClick = onHistoryClick) {
+        QuickChip("History", Modifier.weight(1f)) {
             IconHistory(MaterialTheme.colorScheme.primary, size = 18.dp)
             Spacer(Modifier.width(7.dp))
             Text("History", style = MaterialTheme.typography.labelLarge)
         }
-        QuickChip(modifier = Modifier.weight(1f), onClick = onWatchLaterClick) {
+        QuickChip("Watch later", Modifier.weight(1f)) {
             IconBookmark(MaterialTheme.colorScheme.primary, size = 18.dp)
             Spacer(Modifier.width(7.dp))
             Text("Watch later", style = MaterialTheme.typography.labelLarge)
@@ -182,6 +177,7 @@ fun QuickAccessRow(
 
 @Composable
 private fun QuickChip(
+    label: String,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
     content: @Composable RowScope.() -> Unit
