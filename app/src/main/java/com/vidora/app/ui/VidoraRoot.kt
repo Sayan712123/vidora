@@ -122,8 +122,7 @@ fun VidoraRoot() {
                                 Text(
                                     text = tab.label,
                                     fontSize = 10.5.sp,
-                                    fontWeight = if (selected) FontWeight.SemiBold
-                                                 else FontWeight.Normal
+                                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
                                 )
                             },
                             colors = NavigationBarItemDefaults.colors(
@@ -196,8 +195,9 @@ fun VidoraRoot() {
                 route = Routes.VIDEO,
                 arguments = listOf(navArgument("videoId") { type = NavType.StringType })
             ) { entry ->
+                val id = entry.arguments?.getString("videoId").orEmpty()
                 PlayerScreen(
-                    videoId = entry.arguments?.getString("videoId").orEmpty(),
+                    videoId = id,
                     onBack = { navController.popBackStack() },
                     onVideoClick = { navController.navigate(Routes.video(it.id)) },
                     onChannelClick = { navController.navigate(Routes.channel(it)) }

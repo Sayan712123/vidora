@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.viewinterop.AndroidView
 
 /**
@@ -38,7 +39,7 @@ fun YouTubePlayer(
         modifier = modifier
             .fillMaxWidth()
             .aspectRatio(16f / 9f)
-            .background(AndroidColor.BLACK),
+            .background(Color.Black),
         factory = { context ->
             WebView(context).apply {
                 setBackgroundColor(AndroidColor.BLACK)
@@ -107,13 +108,13 @@ private fun playerHtml(videoId: String, autoplay: Boolean): String {
     """.trimIndent()
 }
 
-/** A plain black box shown while the video metadata is still loading. */
+/** A plain black 16:9 box, shown while the video metadata is still loading. */
 @Composable
 fun PlayerPlaceholder(modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .fillMaxWidth()
             .aspectRatio(16f / 9f)
-            .background(AndroidColor.BLACK)
+            .background(Color.Black)
     )
 }
