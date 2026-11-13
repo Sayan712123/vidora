@@ -94,7 +94,7 @@ into `BuildConfig.YOUTUBE_API_KEY`.
 
 1. `local.properties` — recommended.
 2. An environment variable: `export YOUTUBE_API_KEY=AIza...`
-3. `gradle.properties` or a `-P` flag: `./gradlew assembleDebug -PYOUTUBE_API_KEY=AIza...`
+3. `gradle.properties` or a `-P` flag: `gradle assembleDebug -PYOUTUBE_API_KEY=AIza...`
 
 If no key is set the app still builds and runs; every screen shows a clear
 "API key missing" notice with the three steps above, and **Settings → YouTube Data API**
@@ -107,18 +107,30 @@ reports the status.
 
 You need **JDK 17** and the Android SDK (Android Studio installs both).
 
+**The easiest path:** open the folder in Android Studio (`File → Open`), let it sync, and
+press **Run**. Android Studio generates the Gradle wrapper for you on first sync.
+
+**From a terminal** you need Gradle 8.7 available. Either generate the wrapper once, or
+use a local Gradle install:
+
 ```bash
-# Debug build - installs alongside any release build
-./gradlew assembleDebug
-# -> app/build/outputs/apk/debug/app-debug.apk
+# Option A - generate the wrapper once (needs a local Gradle 8.7+)
+gradle wrapper --gradle-version 8.7
+./gradlew assembleDebug        # afterwards ./gradlew works as usual
 
-# Release build (minified, resource-shrunk)
-./gradlew assembleRelease
-# -> app/build/outputs/apk/release/app-release.apk
-
-# Install straight onto a connected device
-./gradlew installDebug
+# Option B - use Gradle directly, no wrapper needed
+gradle assembleDebug
+gradle assembleRelease         # minified + resource-shrunk
+gradle installDebug            # install onto a connected device
 ```
+
+The build output lands in `app/build/outputs/apk/debug/app-debug.apk` and
+`app/build/outputs/apk/release/app-release.apk`.
+
+> The `gradle-wrapper.jar` is intentionally not committed to this repository. The CI
+> workflow downloads its own Gradle, and Android Studio recreates the wrapper, so neither
+> needs the jar in git. If you prefer `./gradlew` locally, run the `gradle wrapper`
+> command above once.
 
 On Windows use `gradlew.bat` instead of `./gradlew`.
 
@@ -225,7 +237,6 @@ vidora/
 │           ├── mipmap/                       legacy vector launcher icon (API 21–25)
 │           ├── mipmap-anydpi-v26/            adaptive icon (API 26+)
 │           └── values/                       strings, colors, theme
-├── gradle/wrapper/                   Gradle 8.7 wrapper
 ├── scripts/generate-keystore.sh      keystore helper
 ├── local.properties.example          copy to local.properties
 └── store/icon-512.webp               512×512 icon for a store listing
