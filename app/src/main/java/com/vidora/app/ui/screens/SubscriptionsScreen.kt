@@ -5,7 +5,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,7 +27,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.vidora.app.data.AppGraph
@@ -79,7 +77,7 @@ fun SubscriptionsScreen(
 
         // Channel rail
         LazyRow(
-            contentPadding = PaddingValues(horizontal = 16.dp),
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(14.dp),
             modifier = Modifier.padding(bottom = 8.dp)
         ) {
@@ -97,7 +95,7 @@ fun SubscriptionsScreen(
                             .clip(CircleShape)
                             .background(
                                 if (active) MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)
-                                else Color.Transparent
+                                else androidx.compose.ui.graphics.Color.Transparent
                             )
                             .padding(3.dp)
                     ) {

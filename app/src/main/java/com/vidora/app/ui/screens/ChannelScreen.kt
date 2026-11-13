@@ -53,8 +53,9 @@ fun ChannelScreen(
     var channel by remember(channelId) { mutableStateOf(repo.cachedChannel(channelId)) }
     var error by remember(channelId) { mutableStateOf<String?>(null) }
     var aboutExpanded by remember(channelId) { mutableStateOf(false) }
+    var reloadToken by remember(channelId) { mutableStateOf(0) }
 
-    LaunchedEffect(channelId) {
+    LaunchedEffect(channelId, reloadToken) {
         error = null
         try {
             val loaded = repo.channel(channelId)
@@ -68,7 +69,7 @@ fun ChannelScreen(
         ScreenTopBar(title = channel?.title ?: "Channel", onBack = onBack)
 
         if (error != null && channel == null) {
-            ErrorBlock(message = error.orEmpty(), onRetry = {})
+            ErrorBlock(message = error.orEmpty(), onRetry = { reloadToken++ })
             return@Column
         }
 
