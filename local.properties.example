@@ -1,0 +1,25 @@
+# Copy this file to `local.properties` in the project root and fill in your key.
+# `local.properties` is git-ignored, so your key never reaches the repository.
+
+# ---------------------------------------------------------------------------
+# REQUIRED: your own YouTube Data API v3 key
+# ---------------------------------------------------------------------------
+# 1. Open https://console.cloud.google.com/apis/library/youtube.googleapis.com
+# 2. Create a project (or pick one) and press Enable.
+# 3. Go to APIs & Services -> Credentials -> Create credentials -> API key.
+# 4. Paste it below.
+YOUTUBE_API_KEY=AIzaSy...your-key-here...
+
+# ---------------------------------------------------------------------------
+# OPTIONAL
+# ---------------------------------------------------------------------------
+# Default content region for the home feed (ISO 3166-1 alpha-2).
+# The user can change this at runtime in Settings.
+VIDORA_REGION=IN
+
+# Release signing. Leave these out and `assembleRelease` falls back to the
+# debug key, which is fine for testing but not for distribution.
+# RELEASE_KEYSTORE_PATH=release.keystore
+# RELEASE_KEYSTORE_PASSWORD=changeit
+# RELEASE_KEY_ALIAS=vidora
+# RELEASE_KEY_PASSWORD=changeit
