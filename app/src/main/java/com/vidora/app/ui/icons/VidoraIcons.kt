@@ -11,10 +11,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
-import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import kotlin.math.cos
+import kotlin.math.sin
 
 /**
  * A tiny hand-drawn icon set for Vidora.
@@ -29,7 +30,7 @@ private const val GRID = 24f
 private fun IconCanvas(
     size: Dp = 24.dp,
     tint: Color,
-    painter: DrawScope.(Float) -> Unit
+    painter: androidx.compose.ui.graphics.drawscope.DrawScope.(Float) -> Unit
 ) {
     Canvas(modifier = Modifier.size(size)) {
         val scale = this.size.minDimension / GRID
@@ -37,7 +38,7 @@ private fun IconCanvas(
     }
 }
 
-private fun DrawScope.strokePath(
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.strokePath(
     scale: Float,
     tint: Color,
     width: Float = 1.9f,
@@ -55,7 +56,7 @@ private fun DrawScope.strokePath(
     )
 }
 
-private fun DrawScope.fillPath(
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.fillPath(
     scale: Float,
     tint: Color,
     block: Path.() -> Unit
@@ -269,8 +270,10 @@ fun IconSettings(tint: Color, size: Dp = 24.dp) = IconCanvas(size, tint) { s ->
             val cy = 12f * s
             val r1 = 7.6f * s
             val r2 = 10.2f * s
-            moveTo(cx + (r1 * Math.cos(angle)).toFloat(), cy + (r1 * Math.sin(angle)).toFloat())
-            lineTo(cx + (r2 * Math.cos(angle)).toFloat(), cy + (r2 * Math.sin(angle)).toFloat())
+            val cosA = cos(angle).toFloat()
+            val sinA = sin(angle).toFloat()
+            moveTo(cx + r1 * cosA, cy + r1 * sinA)
+            lineTo(cx + r2 * cosA, cy + r2 * sinA)
         }
     }
 }
@@ -314,8 +317,10 @@ fun IconSun(tint: Color, size: Dp = 24.dp) = IconCanvas(size, tint) { s ->
             val angle = Math.toRadians(i * 45.0)
             val cx = 12f * s
             val cy = 12f * s
-            moveTo(cx + (8.6f * Math.cos(angle)).toFloat() * s, cy + (8.6f * Math.sin(angle)).toFloat() * s)
-            lineTo(cx + (10.8f * Math.cos(angle)).toFloat() * s, cy + (10.8f * Math.sin(angle)).toFloat() * s)
+            val cosA = cos(angle).toFloat()
+            val sinA = sin(angle).toFloat()
+            moveTo(cx + 8.6f * s * cosA, cy + 8.6f * s * sinA)
+            lineTo(cx + 10.8f * s * cosA, cy + 10.8f * s * sinA)
         }
     }
 }
